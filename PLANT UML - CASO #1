@@ -1,1 +1,25 @@
+Clase: Mutante
+  - Puntos de energia (Int)
+  - Superpoder 
+  - Patron de movimiento 
+
+  Tanque:
+    - Defensa 
+    - Daño
+
+  DPS: 
+  - Daño 
+  - Defensa
+
+
+Clase: Equipos
+  - Cantidad de mutantes
+
+  Equipo 1
+  - Simbolo
+
+  Equipo 2
+  - Simbolo
+
+
 
