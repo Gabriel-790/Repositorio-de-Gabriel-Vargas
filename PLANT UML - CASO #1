@@ -1,7 +1,7 @@
 Clase: Mutante
   - Puntos de energia (Int)
-  - Superpoder 
-  - Patron de movimiento 
+  - Superpoder (Superpower)
+  - Patron de movimiento (pattern)
 
   Tanque:
     - Defensa 
@@ -12,14 +12,17 @@ Clase: Mutante
   - Defensa
 
 
+
 Clase: Equipos
   - Cantidad de mutantes
 
   Equipo 1
-  - Simbolo
+  - Simbolo (String)
 
   Equipo 2
-  - Simbolo
+  - Simbolo (string)
+
+
 
 
 
