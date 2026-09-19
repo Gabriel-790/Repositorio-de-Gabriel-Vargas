@@ -16,12 +16,26 @@ Clase: Mutante
 Clase: Equipos
   - Cantidad de mutantes
 
-  Equipo 1
+  Equipo 1:
   - Simbolo (String)
 
-  Equipo 2
+  Equipo 2:
   - Simbolo (string)
 
+
+Clase: Game layer
+  - Observer
+  - Battlefield
+  - crearEquipos ()
+  - Numero de mutantes Equipo 1 (int)
+  - Numero de mutantes Equipo 2 (int)
+  - verificarVictoria ()
+
+Clase: Control layer
+  - MoverMuntantes ()
+
+Clase: UI layer
+  - Apartado grafico
 
 
 
