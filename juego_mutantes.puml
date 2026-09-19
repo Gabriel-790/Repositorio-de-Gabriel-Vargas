@@ -1,0 +1,246 @@
+@startuml juego_mutantes
+title Juego de mutantes por equipos - Diagrama de clases (spec v6)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+' ============================================================
+' MODELO DE DOMINIO
+' ============================================================
+package "Modelo de dominio" {
+
+  abstract class Mutante {
+    {static} +ENERGIA_INICIAL : int = 100
+    {static} +ATAQUE_MAX : int = 7
+    {static} +DAÑO_MINIMO : int = 1
+    --
+    -puntosEnergia : int
+    -ataque : int
+    -defensa : int
+    -defendiendo : boolean
+    -superpoder : Superpower
+    -patronMovimiento : Pattern
+    -posicion : Casilla
+    -equipo : Equipo
+    --
+    +atacar(objetivo : Mutante)
+    +defender()
+    +recibirDaño(ataqueRival : int) : int
+    +aumentarAtaque()
+    +mover()
+    +estaVivo() : boolean
+  }
+
+  class Tanque {
+    ' ataque inicial: 1 a 3
+    ' defensa inicial: 2 a 3
+  }
+
+  class DPS {
+    ' ataque inicial: 2 a 3
+    ' defensa inicial: 1 a 3
+  }
+
+  interface Superpower {
+    +aplicar(usuario : Mutante)
+  }
+
+  interface Pattern {
+    +siguientePosicion(actual : Casilla, campo : Battlefield) : Casilla
+  }
+
+  class Equipo {
+    -simbolo : String
+    -mutantes : List<Mutante>
+    -cantidadMutantes : int
+    --
+    +mutantesVivos() : List<Mutante>
+    +registrarBaja(m : Mutante)
+  }
+
+  Mutante <|-- Tanque
+  Mutante <|-- DPS
+  Mutante --> "1" Superpower : superpoder
+  Mutante --> "1" Pattern : patronMovimiento
+  Equipo "1" o-- "*" Mutante : mutantes
+}
+
+' ============================================================
+' GAME LAYER
+' ============================================================
+package "Game layer" {
+
+  interface Observer {
+    +actualizar(evento : GameEvent)
+  }
+
+  enum TipoEvento {
+    MOVIMIENTO
+    ATAQUE
+    DEFENSA
+    BAJA
+    VICTORIA
+  }
+
+  class GameEvent {
+    -tipo : TipoEvento
+    -origen : Mutante
+    -destino : Mutante
+    -daño : int
+  }
+
+  class GameLayer {
+    -battlefield : Battlefield
+    -equipo1 : Equipo
+    -equipo2 : Equipo
+    -numMutantesEquipo1 : int
+    -numMutantesEquipo2 : int
+    -partidaTerminada : boolean
+    -observadores : List<Observer>
+    --
+    +crearEquipos()
+    +verificarVictoria() : Equipo
+    +registrarObservador(o : Observer)
+    +notificar(evento : GameEvent)
+  }
+
+  class Battlefield {
+    -filas : int
+    -columnas : int
+    -casillas : Casilla[][]
+    --
+    +reservarCasilla(m : Mutante, destino : Casilla) : boolean
+    +liberarCasilla(c : Casilla)
+    +enemigosAdyacentes(m : Mutante) : List<Mutante>
+    +dentroDeLimites(c : Casilla) : boolean
+  }
+
+  class Casilla {
+    -fila : int
+    -columna : int
+    -ocupante : Mutante
+    --
+    +estaLibre() : boolean
+    +adyacentes() : List<Casilla>
+  }
+
+  GameLayer "1" *-- "1" Battlefield
+  GameLayer "1" --> "2" Equipo
+  GameLayer "1" o-- "*" Observer : notifica
+  GameLayer ..> GameEvent : crea
+  GameEvent --> TipoEvento
+  Battlefield "1" *-- "*" Casilla
+  Casilla "1" --> "0..1" Mutante : ocupante
+}
+
+' ============================================================
+' CONTROL LAYER
+' ============================================================
+package "Control layer" {
+
+  enum Accion {
+    ATACAR
+    DEFENDER
+  }
+
+  class ControlLayer {
+    -hilos : List<HiloMutante>
+    -partidaActiva : AtomicBoolean
+    --
+    +moverMutantes()
+    +iniciarPartida()
+    +detenerPartida()
+  }
+
+  class HiloMutante <<Runnable>> {
+    {static} +PROB_ATACAR : double = 0.7
+    --
+    -mutante : Mutante
+    -juego : GameLayer
+    -intervaloTick : long
+    --
+    +run()
+    -decidirAccion() : Accion
+    -atacarEnemigoAdyacente()
+    -activarDefensa()
+    -moverSegunPatron()
+  }
+
+  ControlLayer "1" *-- "*" HiloMutante : un hilo por mutante
+  ControlLayer --> "1" GameLayer
+  HiloMutante --> "1" Mutante
+  HiloMutante --> "1" GameLayer
+  HiloMutante ..> Accion
+}
+
+' ============================================================
+' UI LAYER
+' ============================================================
+package "UI layer" {
+
+  class UILayer {
+    -colaEventos : BlockingQueue<GameEvent>
+    --
+    +actualizar(evento : GameEvent)
+    +dibujarCampo()
+    +dibujarMutante(m : Mutante)
+    +mostrarVictoria(ganador : Equipo)
+  }
+
+  UILayer ..|> Observer
+  UILayer ..> GameLayer : se suscribe
+}
+
+' ============================================================
+' NOTAS DE REGLAS
+' ============================================================
+note right of Mutante
+  **Reglas de combate**
+  - Inicia con 100 de energía.
+  - Solo ataca a un enemigo en casilla
+    adyacente (vertical, horizontal o diagonal).
+  - Si el objetivo defiende:
+    daño = max(1, ataque // defensa).
+  - Si no defiende: daño = ataque completo.
+  - Daño mínimo de cualquier ataque: 1.
+  - La defensa dura hasta recibir un ataque.
+  - Al eliminar a un mutante: ataque + 1
+    (tope 7).
+  - recibirDaño es atómico: solo quien lleva
+    la energía a 0 cuenta la baja.
+end note
+
+note bottom of HiloMutante
+  **Ciclo de cada tick**
+  1. Decide al azar: 70% atacar, 30% defender.
+  2. Si ataca y hay enemigos a la par,
+     elige uno al azar. Si no hay, solo se mueve.
+  3. Si defiende, activa la defensa.
+  4. Se mueve según su patrón (también
+     mientras defiende).
+  5. Espera el intervalo y repite hasta
+     ser eliminado o terminar la partida.
+end note
+
+note bottom of Battlefield
+  Una casilla admite como máximo un mutante.
+  reservarCasilla es atómica: "si está libre,
+  ocúpala" en una sola operación.
+end note
+
+note bottom of UILayer
+  Los hilos de juego solo encolan eventos.
+  La UI los consume desde su propio hilo
+  de interfaz.
+end note
+
+note bottom of GameLayer
+  verificarVictoria: gana el equipo que
+  elimina a todos los mutantes del otro.
+  Se ejecuta bajo bloqueo y publica
+  el resultado una sola vez.
+end note
+
+@enduml
