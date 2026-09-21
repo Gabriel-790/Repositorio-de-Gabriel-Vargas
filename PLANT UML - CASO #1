@@ -2,6 +2,8 @@ Clase: Mutante
   - Puntos de energia (Int)
   - Superpoder (Superpower)
   - Patron de movimiento (pattern)
+  - atacar()
+  - aefender()
 
   Tanque:
     - Defensa 
@@ -23,19 +25,6 @@ Clase: Equipos
   - Simbolo (string)
 
 
-Clase: Game layer
-  - Observer
-  - Battlefield
-  - crearEquipos ()
-  - Numero de mutantes Equipo 1 (int)
-  - Numero de mutantes Equipo 2 (int)
-  - verificarVictoria ()
 
-Clase: Control layer
-  - MoverMuntantes ()
-
-Clase: UI layer
-  - Apartado grafico
-  
 
 
