@@ -9,7 +9,7 @@ import mutantes.modelo.Mutante;
 
 /**
  * Hilo de un mutante. En cada tick:
- * 1) decide al azar (70 % atacar, 30 % defender);
+ * 1) decide al azar (85 % atacar, 15 % defender);
  * 2) si ataca, golpea a un enemigo adyacente (si no hay ninguno, no ataca);
  * 3) si defiende, activa la defensa;
  * 4) se mueve según su patrón (también mientras defiende);
